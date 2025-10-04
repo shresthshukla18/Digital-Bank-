@@ -70,8 +70,54 @@ If you are deploying to a platform that uses environment variables (like a custo
 🚀 Deployment
 The entire application is self-contained in index.html.
 
-Commit all files to a new GitHub repository.
 
-Enable GitHub Pages for the repository, selecting the main branch (or whichever branch holds your index.html).
+**⚙️ Local Development Setup (VS Code) :**
 
-The application will be live at https://[your-username].github.io/[repository-name].
+
+This application relies on environment variables (__firebase_config, __app_id, __initial_auth_token) that are automatically provided in the Canvas environment but do not exist in VS Code.
+
+To run the project locally, you must perform the following steps to inject your Firebase API keys and properly launch the file.
+
+Step 1: Secure Your Firebase Configuration
+You need to hardcode your project's configuration into the index.html file.
+
+Get Your Config: Retrieve your firebaseConfig object from the Firebase Console (Settings > Web App).
+
+Create firebase_config.js: Create a new file named firebase_config.js in the root of your project directory (the same folder as index.html). This file holds your secrets and is ignored by Git.
+
+Content of firebase_config.js:
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
+};
+
+Step 2: Update index.html
+Modify the <script type="module"> block in index.html to load your new configuration file instead of relying on environment variables.
+
+A. Remove Canvas Variables: Locate lines 426-427 (or near the start of the <script type="module"> block):
+
+// Default to an empty object if variables aren't defined, which prevents crashes
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+**B. Replace with Local Import:** **Replace** those lines with a dynamic import for your new local file:
+```javascript
+// --- LOCAL VS CODE SETUP ---
+import { firebaseConfig } from './firebase_config.js'; // Import your local config file
+const appId = firebaseConfig.appId; // Use the appId from the local config
+// --- END LOCAL SETUP ---
+*(Note: You do not need to worry about `__initial_auth_token` as this new setup naturally bypasses it and goes to the login screen.)*
+
+### Step 3: Run the Application Locally
+
+Due to the use of JavaScript modules (`import/export`), you cannot simply double-click `index.html`. You need a local server.
+
+1.  **Install Live Server:** In VS Code, install the **Live Server** extension (by Ritwick Dey).
+2.  **Launch:** Right-click on `index.html` and select **"Open with Live Server"**.
+
+The application will open in your browser, connect to your Firebase project, and prompt you to Sign Up or Log In.
+
+I've updated the `README.md` to be extremely clear about the steps required for a user running the code locally in VS Code. It explains why the Canvas variables don't work and provides the specific code and file structure required to load the secret Firebase API keys safely and correctly.
